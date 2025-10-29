@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Subscribe - YouTube Streamer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center mb-5">Choose Your Plan</h1>
+    
+    {% if active_subscription %}
+        <div class="alert alert-success text-center">
+            <h4>You have an active subscription!</h4>
+            <p>Current Plan: <strong>{{ active_subscription.get_plan_type_display }}</strong></p>
+            <p>Expires: {{ active_subscription.end_date|date:"M d, Y" }}</p>
+        </div>
+    {% endif %}
+    
+    <div class="row">
+        {% for plan_key, plan in plans.items %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 shadow-lg {% if plan_key == 'annual' %}border-primary{% endif %}">
+                    {% if plan_key == 'annual' %}
+                        <div class="card-header bg-primary text-white text-center">
+                            <strong>MOST POPULAR</strong>
+                        </div>
+                    {% endif %}
+                    <div class="card-body text-center p-5">
+                        <h3 class="card-title">{{ plan.name }}</h3>
+                        <div class="display-4 my-4">
+                            ₹{{ plan.price|floatformat:0|slice:":-2" }}
+                            <small class="text-muted fs-5">
+                                /{% if plan_key == 'monthly' %}month{% else %}year{% endif %}
+                            </small>
+                        </div>
+                        
+                        <ul class="list-unstyled my-4">
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <strong>{{ plan.max_streams }}</strong> Concurrent Stream{% if plan.max_streams > 1 %}s{% endif %}
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success"></i>
+                                24/7 Streaming
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success"></i>
+                                Unlimited Media Files
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success"></i>
+                                YouTube OAuth Integration
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success"></i>
+                                Loop Support
+                            </li>
+                            <li class="mb-3">
+                                <i class="fas fa-check-circle text-success"></i>
+                                {{ plan.duration_days }} Days Access
+                            </li>
+                        </ul>
+                        
+                        
+                        {% if not active_subscription or active_subscription.plan_type != plan_key %}
+                            <a href="{% url 'create_order' plan_key %}" class="btn btn-lg {% if plan_key == 'annual' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
+                                Subscribe Now
+                            </a>
+                        {% else %}
+                            <button class="btn btn-lg btn-success w-100" disabled>
+                                Current Plan
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-md-12 text-center">
+            <h3>Frequently Asked Questions</h3>
+        </div>
+        <div class="col-md-6">
+            <h5>Can I upgrade my plan?</h5>
+            <p>Yes, you can upgrade from monthly to annual at any time.</p>
+        </div>
+        <div class="col-md-6">
+            <h5>What payment methods do you accept?</h5>
+            <p>We accept all major credit/debit cards, UPI, net banking through Razorpay.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

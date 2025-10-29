@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Stream - YouTube Streamer{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Page Header -->
+            <div class="text-center mb-4">
+                <h1 class="display-5 fw-bold text-white mb-2">Create New Stream</h1>
+                <p class="text-white mb-0" style="opacity: 0.9;">Configure your YouTube live stream</p>
+            </div>
+
+            <div class="card">
+                <div class="card-body p-4">
+                    <form method="post" id="streamForm">
+                        {% csrf_token %}
+
+                        <!-- Stream Title -->
+                        <div class="mb-4">
+                            <label for="id_title" class="form-label">
+                                <i class="bi bi-tag"></i> Stream Title *
+                            </label>
+                            <input type="text" 
+                                   class="form-control {% if form.title.errors %}is-invalid{% endif %}" 
+                                   id="id_title" 
+                                   name="title" 
+                                   placeholder="Enter stream title"
+                                   value="{{ form.title.value|default:'' }}"
+                                   required>
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback">{{ form.title.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Media Files Selection -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-collection-play"></i> Select Media Files *
+                            </label>
+                            <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                {% if media_files %}
+                                    {% for media in media_files %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               name="media_files" 
+                                               value="{{ media.id }}" 
+                                               id="media{{ media.id }}">
+                                        <label class="form-check-label d-flex align-items-center" for="media{{ media.id }}">
+                                            {% if media.media_type == 'video' %}
+                                                <i class="bi bi-camera-video text-primary me-2"></i>
+                                            {% else %}
+                                                <i class="bi bi-music-note text-success me-2"></i>
+                                            {% endif %}
+                                            <strong>{{ media.title }}</strong>
+                                            <small class="text-muted ms-2">({{ media.file.size|filesizeformat }})</small>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-muted text-center mb-0">
+                                        No media files available. 
+                                        <a href="{% url 'media_upload' %}">Upload some files</a> first.
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Stream Type Toggle -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-lightning"></i> Stream Type *
+                            </label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="stream_type" id="instant" value="instant" checked>
+                                <label class="btn btn-outline-primary" for="instant">
+                                    <i class="bi bi-play-circle"></i> Instant Start
+                                </label>
+
+                                <input type="radio" class="btn-check" name="stream_type" id="scheduled" value="scheduled">
+                                <label class="btn btn-outline-primary" for="scheduled">
+                                    <i class="bi bi-calendar-check"></i> Schedule Stream
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Scheduled Options (Hidden by default) -->
+                        <div id="scheduleOptions" style="display: none;">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="id_start_time" class="form-label">
+                                        <i class="bi bi-calendar"></i> Start Time
+                                    </label>
+                                    <input type="datetime-local" 
+                                           class="form-control" 
+                                           id="id_start_time" 
+                                           name="start_time">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_end_time" class="form-label">
+                                        <i class="bi bi-calendar-x"></i> End Time (Optional)
+                                    </label>
+                                    <input type="datetime-local" 
+                                           class="form-control" 
+                                           id="id_end_time" 
+                                           name="end_time">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Loop Option -->
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="id_loop_enabled" 
+                                       name="loop_enabled"
+                                       checked>
+                                <label class="form-check-label" for="id_loop_enabled">
+                                    <i class="bi bi-arrow-repeat"></i> Loop content continuously (24/7 streaming)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- YouTube Account Selection -->
+                        <div class="mb-4">
+                            <label for="id_youtube_account" class="form-label">
+                                <i class="bi bi-youtube"></i> YouTube Account *
+                            </label>
+                            <select class="form-select" id="id_youtube_account" name="youtube_account" required>
+                                <option value="">Select YouTube account</option>
+                                {% for account in youtube_accounts %}
+                                    <option value="{{ account.id }}">{{ account.channel_title }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if not youtube_accounts %}
+                                <small class="text-muted">
+                                    No YouTube accounts connected. 
+                                    <a href="{% url 'connect_youtube' %}">Connect one now</a>
+                                </small>
+                            {% endif %}
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'stream_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-broadcast"></i> Create Stream
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle schedule options
+document.querySelectorAll('input[name="stream_type"]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+        const scheduleOptions = document.getElementById('scheduleOptions');
+        if (this.value === 'scheduled') {
+            scheduleOptions.style.display = 'block';
+            document.getElementById('id_start_time').required = true;
+        } else {
+            scheduleOptions.style.display = 'none';
+            document.getElementById('id_start_time').required = false;
+        }
+    });
+});
+</script>
+{% endblock %}
