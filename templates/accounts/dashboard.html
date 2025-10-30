@@ -60,6 +60,9 @@
                         <ul class="list-unstyled">
                             {% for account in youtube_accounts %}
                                 <li><i class="fas fa-check-circle text-success"></i> {{ account.channel_title }}</li>
+                                <a href="{% url 'disconnect_youtube' account.id %}" onclick="return confirm('Disconnect from YouTube?');" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-unlink"></i> Disconnect
+                                </a>
                             {% endfor %}
                         </ul>
                     {% else %}

@@ -138,26 +138,29 @@ def stream_create(request):
         user=request.user,
         is_active=True
     ).first()
-    
+
     if not subscription:
         messages.error(request, 'You need an active subscription to create streams')
         return redirect('subscribe')
     
-    # Check stream limit
+    # 👇 **STRONG LIMIT CHECK – place here!**
+    forbidden_statuses = ['running','stopped', 'starting', 'scheduled']
     active_streams = Stream.objects.filter(
         user=request.user,
-        status__in=['running', 'starting']
+        status__in=forbidden_statuses
     ).count()
     
     if active_streams >= subscription.max_streams:
-        messages.error(request, f'You have reached your stream limit ({subscription.max_streams} streams)')
+        messages.error(request, f'You have reached your stream limit ({subscription.max_streams} streams). '
+                                f'This includes all running, starting, and scheduled streams.')
         return redirect('stream_list')
-    
+
     # Check YouTube connection
     youtube_accounts = YouTubeAccount.objects.filter(user=request.user, is_active=True)
     if not youtube_accounts.exists():
         messages.error(request, 'Please connect your YouTube account first')
         return redirect('connect_youtube')
+    
     
     if request.method == 'POST':
         title = request.POST.get('title')
@@ -290,11 +293,14 @@ def stream_stop(request, stream_id):
 def stream_delete(request, stream_id):
     """Delete a stream"""
     stream = get_object_or_404(Stream, id=stream_id, user=request.user)
+
     
     if stream.status in ['running', 'starting']:
         messages.error(request, 'Cannot delete a running stream. Please stop it first.')
         return redirect('stream_detail', stream_id=stream.id)
     
+    manager = StreamManager(stream)
+    manager.stop_stream()
     stream.delete()
     messages.success(request, 'Stream deleted successfully!')
     return redirect('stream_list')

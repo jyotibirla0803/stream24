@@ -97,3 +97,106 @@ def profile_view(request):
         'profile_form': profile_form,
     }
     return render(request, 'accounts/profile.html', context)
+
+
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+from apps.accounts.models import YouTubeAccount
+from django.contrib.auth.decorators import login_required
+
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from apps.accounts.models import YouTubeAccount
+from apps.streaming.models import Stream
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+import logging
+import psutil
+
+logger = logging.getLogger(__name__)
+
+@login_required
+def disconnect_youtube(request, account_id):
+    """Disconnect YouTube account and stop all associated streams"""
+    yt_account = get_object_or_404(YouTubeAccount, id=account_id, user=request.user)
+    
+    # Step 1: Build YouTube client BEFORE clearing tokens
+    youtube = None
+    try:
+        if yt_account.access_token and yt_account.refresh_token:
+            credentials = Credentials(
+                token=yt_account.access_token,
+                refresh_token=yt_account.refresh_token,
+                token_uri='https://oauth2.googleapis.com/token',
+                client_id=settings.GOOGLE_CLIENT_ID,
+                client_secret=settings.GOOGLE_CLIENT_SECRET
+            )
+            youtube = build('youtube', 'v3', credentials=credentials)
+    except Exception as e:
+        logger.error(f"Failed to build YouTube client for disconnect: {e}")
+    
+    # Step 2: Find all running streams for this account
+    active_streams = Stream.objects.filter(
+        youtube_account=yt_account,
+        status__in=['running', 'starting']
+    )
+    
+    # 🔍 DEBUG LOGGING - PUT HERE
+    logger.info(f"=== DISCONNECT DEBUG ===")
+    logger.info(f"Account: {yt_account.channel_title}")
+    logger.info(f"Found {active_streams.count()} active streams")
+    logger.info(f"YouTube client built: {youtube is not None}")
+    for stream in active_streams:
+        logger.info(f"Stream {stream.id} - Title: {stream.title} - Broadcast ID: {stream.broadcast_id} - Process ID: {stream.process_id}")
+    logger.info(f"========================")
+    
+    # Step 3: Stop each stream on YouTube BEFORE clearing tokens
+    for stream in active_streams:
+        try:
+            # Kill local FFmpeg process
+            if stream.process_id:
+                try:
+                    parent = psutil.Process(stream.process_id)
+                    for child in parent.children(recursive=True):
+                        child.terminate()
+                    parent.terminate()
+                    parent.wait(timeout=5)
+                    logger.info(f"Killed FFmpeg process {stream.process_id}")
+                except Exception as e:
+                    logger.error(f"Failed to kill process {stream.process_id}: {e}")
+                stream.process_id = None
+            
+            # End YouTube broadcast if we have valid credentials
+            if youtube and stream.broadcast_id:
+                try:
+                    youtube.liveBroadcasts().transition(
+                        part='status',
+                        id=stream.broadcast_id,
+                        broadcastStatus='complete'
+                    ).execute()
+                    logger.info(f"✅ Successfully ended YouTube broadcast {stream.broadcast_id}")
+                except Exception as e:
+                    logger.error(f"❌ Failed to end broadcast {stream.broadcast_id}: {e}")
+            else:
+                logger.warning(f"Skipping YouTube transition - youtube={youtube is not None}, broadcast_id={stream.broadcast_id}")
+            
+            # Update stream status
+            stream.status = 'stopped'
+            stream.save()
+            
+        except Exception as e:
+            logger.error(f"Error stopping stream {stream.id}: {e}")
+    
+    # Step 4: NOW clear the YouTube account tokens
+    yt_account.is_active = False
+    yt_account.access_token = ""
+    yt_account.refresh_token = ""
+    yt_account.save()
+    
+    messages.success(
+        request, 
+        f"Disconnected {yt_account.channel_title}. {active_streams.count()} stream(s) stopped."
+    )
+    return redirect('dashboard')

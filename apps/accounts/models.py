@@ -22,8 +22,8 @@ class YouTubeAccount(models.Model):
     channel_title = models.CharField(max_length=255)
     access_token = models.TextField()
     refresh_token = models.TextField()
-    token_expiry = models.DateTimeField()
-    is_active = models.BooleanField(default=True)
+    token_expiry = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
