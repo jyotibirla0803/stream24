@@ -18,6 +18,19 @@ from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
+import requests
+import tempfile
+
+def download_s3_file(mediafile):
+    url = mediafile.file.url
+    resp = requests.get(url, stream=True)
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+    for chunk in resp.iter_content(chunk_size=1024*1024):
+        tmp.write(chunk)
+    tmp.close()
+    return tmp.name
+
+
 def _resolve_binary(requested: str) -> str:
     """
     Resolve the ffmpeg binary to use:
@@ -210,7 +223,7 @@ class StreamManager:
             input_list_path = f'/tmp/stream_{self.stream.id}_inputs.txt'
             with open(input_list_path, 'w') as f:
                 for media_file in media_files:
-                    file_path = media_file.file.path
+                    file_path = download_s3_file(mediafile)
                     
                     # If it's audio, create a static image video
                     if media_file.media_type == 'audio':
