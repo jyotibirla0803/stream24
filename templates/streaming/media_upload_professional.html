@@ -1,44 +1,51 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Create Stream - YouTube Streamer{% endblock %}
+{% block title %}Upload Media - YouTube Streamer{% endblock %}
 
 {% block extra_css %}
 <style>
-    .create-stream-container {
+    .upload-container {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         min-height: 100vh;
+        display: flex;
+        align-items: center;
         padding: 2rem 0;
     }
 
-    .create-stream-card {
+    .upload-card {
         background: white;
         border-radius: 12px;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
         overflow: hidden;
+        transition: all 0.3s ease;
     }
 
-    .stream-header {
+    .upload-card:hover {
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+    }
+
+    .upload-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         padding: 2.5rem;
         text-align: center;
     }
 
-    .stream-header h1 {
+    .upload-header h1 {
         font-size: 2rem;
         font-weight: 700;
         margin: 0 0 0.5rem 0;
         letter-spacing: -0.5px;
     }
 
-    .stream-header p {
+    .upload-header p {
         font-size: 1rem;
         opacity: 0.9;
         margin: 0;
     }
 
-    .stream-body {
+    .upload-body {
         padding: 2.5rem;
     }
 
@@ -89,22 +96,8 @@
         background-color: #f7fafc;
     }
 
-    .form-textarea {
-        width: 100%;
-        padding: 0.875rem 1rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-family: inherit;
-        resize: vertical;
-        transition: all 0.3s ease;
-    }
-
-    .form-textarea:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        background-color: #f7fafc;
+    .form-input::placeholder {
+        color: #a0aec0;
     }
 
     .form-select {
@@ -134,7 +127,7 @@
     .drop-zone {
         border: 2px dashed #cbd5e0;
         border-radius: 12px;
-        padding: 2rem;
+        padding: 3rem 2rem;
         text-align: center;
         transition: all 0.3s ease;
         cursor: pointer;
@@ -153,8 +146,8 @@
     }
 
     .drop-zone-icon {
-        width: 2.5rem;
-        height: 2.5rem;
+        width: 3rem;
+        height: 3rem;
         margin: 0 auto 1rem;
         color: #cbd5e0;
         transition: all 0.3s ease;
@@ -176,6 +169,7 @@
         text-decoration: none;
         font-weight: 600;
         cursor: pointer;
+        transition: all 0.3s ease;
     }
 
     .drop-zone-link:hover {
@@ -186,6 +180,7 @@
     .drop-zone-hint {
         font-size: 0.85rem;
         color: #718096;
+        margin-top: 0.5rem;
     }
 
     .thumbnail-preview {
@@ -204,7 +199,7 @@
     }
 
     .thumbnail-preview-img {
-        max-width: 300px;
+        max-width: 100%;
         height: auto;
         display: block;
         border-radius: 8px;
@@ -231,132 +226,6 @@
 
     .file-input-hidden {
         display: none;
-    }
-
-    .media-list {
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        overflow: hidden;
-        max-height: 400px;
-        overflow-y: auto;
-    }
-
-    .media-item {
-        display: flex;
-        align-items: center;
-        padding: 1rem;
-        border-bottom: 1px solid #e2e8f0;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .media-item:last-child {
-        border-bottom: none;
-    }
-
-    .media-item:hover {
-        background-color: #f7fafc;
-    }
-
-    .media-checkbox {
-        width: 1.25rem;
-        height: 1.25rem;
-        cursor: pointer;
-        accent-color: #667eea;
-    }
-
-    .media-thumbnail {
-        width: 60px;
-        height: 40px;
-        object-fit: cover;
-        border-radius: 6px;
-        margin-left: 1rem;
-        background-color: #edf2f7;
-    }
-
-    .media-placeholder {
-        width: 60px;
-        height: 40px;
-        background-color: #edf2f7;
-        border-radius: 6px;
-        margin-left: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #cbd5e0;
-    }
-
-    .media-info {
-        flex: 1;
-        margin-left: 1rem;
-    }
-
-    .media-title {
-        font-weight: 600;
-        color: #2d3748;
-        margin: 0;
-        font-size: 0.95rem;
-    }
-
-    .media-meta {
-        font-size: 0.85rem;
-        color: #718096;
-        margin: 0.25rem 0 0 0;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 2rem;
-        background-color: #f7fafc;
-        border-radius: 8px;
-        border: 2px dashed #e2e8f0;
-    }
-
-    .empty-state-icon {
-        width: 3rem;
-        height: 3rem;
-        margin: 0 auto 1rem;
-        color: #cbd5e0;
-    }
-
-    .empty-state-text {
-        font-size: 0.95rem;
-        color: #718096;
-        margin-bottom: 1rem;
-    }
-
-    .checkbox-group {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .toggle-switch {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .toggle-switch input[type="checkbox"] {
-        width: 1.5rem;
-        height: 1.5rem;
-        cursor: pointer;
-        accent-color: #667eea;
-    }
-
-    .toggle-switch label {
-        font-weight: 600;
-        color: #2d3748;
-        cursor: pointer;
-        margin: 0;
-    }
-
-    .toggle-switch .help-text {
-        display: block;
-        font-size: 0.85rem;
-        font-weight: 400;
-        color: #718096;
-        margin: 0.25rem 0 0 0;
     }
 
     .form-actions {
@@ -407,11 +276,6 @@
 
     .btn-primary:active {
         transform: translateY(0);
-    }
-
-    .btn-primary:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
     }
 
     .alert {
@@ -500,47 +364,6 @@
         font-weight: bold;
     }
 
-    .grid-2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-    }
-
-    @media (max-width: 768px) {
-        .create-stream-container {
-            padding: 1rem;
-        }
-
-        .stream-header {
-            padding: 1.5rem;
-        }
-
-        .stream-header h1 {
-            font-size: 1.5rem;
-        }
-
-        .stream-body {
-            padding: 1.5rem;
-        }
-
-        .form-actions {
-            flex-direction: column;
-        }
-
-        .btn {
-            width: 100%;
-        }
-
-        .grid-2 {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-
-        .media-list {
-            max-height: 300px;
-        }
-    }
-
     .loading-spinner {
         display: inline-block;
         width: 1rem;
@@ -554,21 +377,56 @@
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
+
+    .btn-primary:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+        .upload-container {
+            padding: 1rem;
+        }
+
+        .upload-header {
+            padding: 1.5rem;
+        }
+
+        .upload-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .upload-body {
+            padding: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+
+        .drop-zone {
+            padding: 2rem 1rem;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="create-stream-container">
-    <div class="max-w-4xl mx-auto w-full">
-        <div class="create-stream-card">
+<div class="upload-container">
+    <div class="max-w-2xl mx-auto w-full">
+        <div class="upload-card">
             <!-- Header -->
-            <div class="stream-header">
-                <h1>🎬 Create Stream</h1>
-                <p>Configure your YouTube live stream with custom thumbnail</p>
+            <div class="upload-header">
+                <h1>📤 Upload Media</h1>
+                <p>Add videos or audio files to your streaming library</p>
             </div>
 
             <!-- Body -->
-            <div class="stream-body">
+            <div class="upload-body">
                 <!-- Alerts -->
                 {% if messages %}
                     {% for message in messages %}
@@ -581,47 +439,70 @@
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
 
-                    <!-- Stream Title -->
+                    <!-- Title Field -->
                     <div class="form-section">
                         <label for="title" class="form-label">
-                            Stream Title
+                            Media Title
                             <span class="required">*</span>
-                            <span class="help-text">Max 100 characters - This will be visible on YouTube</span>
+                            <span class="help-text">Max 255 characters</span>
                         </label>
                         <input 
                             type="text" 
                             name="title" 
                             id="title" 
                             class="form-input"
-                            placeholder="Enter an engaging stream title"
-                            maxlength="100"
+                            placeholder="Enter media title (e.g., Music Video, Podcast Episode)"
+                            maxlength="255"
                             required
                         >
                     </div>
 
-                    <!-- Stream Description -->
+                    <!-- Media Type Field -->
                     <div class="form-section">
-                        <label for="description" class="form-label">
-                            Description
-                            <span style="color: #a0aec0;">(Optional)</span>
-                            <span class="help-text">Max 5000 characters - Include relevant information about your stream</span>
+                        <label for="media_type" class="form-label">
+                            Media Type
+                            <span class="required">*</span>
                         </label>
-                        <textarea 
-                            name="description" 
-                            id="description" 
-                            class="form-textarea"
-                            placeholder="Describe your stream, include hashtags, links, etc."
-                            maxlength="5000"
-                            rows="4"
-                        ></textarea>
+                        <select name="media_type" id="media_type" class="form-select" required>
+                            <option value="">Select media type</option>
+                            <option value="video">🎬 Video</option>
+                            <option value="audio">🎵 Audio</option>
+                        </select>
                     </div>
 
-                    <!-- Stream Thumbnail -->
+                    <!-- File Upload Field -->
+                    <div class="form-section">
+                        <label for="file" class="form-label">
+                            Media File
+                            <span class="required">*</span>
+                            <span class="help-text">Maximum 5GB per file</span>
+                        </label>
+                        <div class="drop-zone" id="dropZone">
+                            <svg class="drop-zone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <p class="drop-zone-text">
+                                <span class="drop-zone-link" onclick="document.getElementById('file').click();">Click to upload</span>
+                                or drag and drop
+                            </p>
+                            <p class="drop-zone-hint" id="fileHint">MP4, WebM, AVI, MOV • MP3, WAV, AAC, OGG</p>
+                        </div>
+                        <input 
+                            type="file" 
+                            name="file" 
+                            id="file" 
+                            class="file-input-hidden"
+                            accept="video/*,audio/*"
+                            required
+                        >
+                    </div>
+
+                    <!-- Thumbnail Upload Field -->
                     <div class="form-section">
                         <label for="thumbnail" class="form-label">
-                            Stream Thumbnail
+                            Thumbnail Image
                             <span style="color: #a0aec0;">(Optional)</span>
-                            <span class="help-text">JPG or PNG • Max 2MB • Recommended 1280x720px (16:9 ratio)</span>
+                            <span class="help-text">JPG or PNG • Max 2MB • Recommended 1280x720px</span>
                         </label>
                         <div class="drop-zone" id="dropZoneThumbnail">
                             <svg class="drop-zone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -644,104 +525,20 @@
                         <!-- Thumbnail Preview -->
                         <div id="thumbnailPreview" class="thumbnail-preview" style="display: none;">
                             <span class="thumbnail-preview-label">Preview:</span>
-                            <img id="thumbnailImg" src="" alt="Stream thumbnail" class="thumbnail-preview-img">
+                            <img id="thumbnailImg" src="" alt="Thumbnail" class="thumbnail-preview-img">
                             <button type="button" class="thumbnail-remove-btn" onclick="removeThumbnail()">
                                 ✕ Remove Thumbnail
                             </button>
                         </div>
                     </div>
 
-                    <!-- YouTube Account -->
-                    <div class="form-section">
-                        <label for="youtube_account" class="form-label">
-                            YouTube Account
-                            <span class="required">*</span>
-                        </label>
-                        <select name="youtube_account" id="youtube_account" class="form-select" required>
-                            <option value="">Select YouTube account</option>
-                            {% for account in youtube_accounts %}
-                                <option value="{{ account.id }}">📺 {{ account.channel_title }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <!-- Media Files Selection -->
-                    <div class="form-section">
-                        <label class="form-label">
-                            Select Media Files
-                            <span class="required">*</span>
-                            <span class="help-text">Select one or more files to stream</span>
-                        </label>
-
-                        {% if media_files %}
-                            <div class="media-list">
-                                {% for media in media_files %}
-                                    <div class="media-item">
-                                        <input 
-                                            type="checkbox" 
-                                            name="media_files" 
-                                            value="{{ media.id }}" 
-                                            id="media_{{ media.id }}"
-                                            class="media-checkbox"
-                                        >
-
-                                        {% if media.thumbnail %}
-                                            <img src="{{ media.thumbnail.url }}" alt="{{ media.title }}" class="media-thumbnail">
-                                        {% else %}
-                                            <div class="media-placeholder">
-                                                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM4 9a1 1 0 011-1h10a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V9z" />
-                                                </svg>
-                                            </div>
-                                        {% endif %}
-
-                                        <div class="media-info">
-                                            <p class="media-title">{{ media.title }}</p>
-                                            <p class="media-meta">
-                                                {{ media.media_type|title }}
-                                                {% if media.duration %} • {{ media.duration|floatformat:0 }}s{% endif %}
-                                                • {{ media.file_size|filesizeformat }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="empty-state">
-                                <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <p class="empty-state-text">No media files available</p>
-                                <a href="{% url 'media_upload' %}" class="btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none;">
-                                    + Upload Media Files
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Loop Settings -->
-                    <div class="form-section">
-                        <div class="toggle-switch">
-                            <input 
-                                type="checkbox" 
-                                name="loop_enabled" 
-                                id="loop_enabled"
-                                checked
-                            >
-                            <div>
-                                <label for="loop_enabled">Enable Loop</label>
-                                <span class="help-text">Media files will play in a continuous loop</span>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Action Buttons -->
                     <div class="form-actions">
-                        <a href="{% url 'stream_list' %}" class="btn btn-cancel">
+                        <a href="{% url 'media_list' %}" class="btn btn-cancel">
                             ← Cancel
                         </a>
-                        <button type="submit" class="btn btn-primary" id="submitBtn" {% if not media_files %}disabled{% endif %}>
-                            <span>Create Stream</span>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <span>Upload Media</span>
                         </button>
                     </div>
                 </form>
@@ -750,15 +547,14 @@
 
         <!-- Info Box -->
         <div class="info-box">
-            <div class="info-box-title">📋 Stream Setup Guide</div>
+            <div class="info-box-title">📋 Upload Guidelines</div>
             <div class="info-box-content">
                 <ul>
-                    <li>Upload a custom thumbnail to make your stream more attractive (optional)</li>
-                    <li>Stream title is required and will appear on YouTube (1-100 characters)</li>
-                    <li>Select media files in the order you want them to play</li>
-                    <li>Enable Loop to restart playback after all files finish</li>
-                    <li>After creation, use the "Start Stream" button from stream details to go live</li>
-                    <li>Recommended thumbnail size: 1280x720 pixels (16:9 aspect ratio)</li>
+                    <li>Supported video formats: MP4, WebM, AVI, MOV, MKV</li>
+                    <li>Supported audio formats: MP3, WAV, AAC, OGG, FLAC</li>
+                    <li>Maximum file size: 5GB per file</li>
+                    <li>Thumbnail helps viewers identify your content</li>
+                    <li>Recommended thumbnail size: 1280x720 pixels (16:9 ratio)</li>
                 </ul>
             </div>
         </div>
@@ -766,13 +562,17 @@
 </div>
 
 <script>
+    // File upload handling
+    const fileInput = document.getElementById('file');
+    const dropZone = document.getElementById('dropZone');
     const thumbnailInput = document.getElementById('thumbnail');
     const dropZoneThumbnail = document.getElementById('dropZoneThumbnail');
-    const form = document.querySelector('form');
     const submitBtn = document.getElementById('submitBtn');
+    const form = document.querySelector('form');
 
-    // Prevent default drag behaviors
+    // File drop zone events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
         dropZoneThumbnail.addEventListener(eventName, preventDefaults, false);
     });
 
@@ -781,20 +581,25 @@
         e.stopPropagation();
     }
 
-    // Highlight drop zone
+    // Highlight drop zone on drag
     ['dragenter', 'dragover'].forEach(eventName => {
-        dropZoneThumbnail.addEventListener(eventName, () => {
-            dropZoneThumbnail.classList.add('active');
-        }, false);
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('active'), false);
+        dropZoneThumbnail.addEventListener(eventName, () => dropZoneThumbnail.classList.add('active'), false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
-        dropZoneThumbnail.addEventListener(eventName, () => {
-            dropZoneThumbnail.classList.remove('active');
-        }, false);
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('active'), false);
+        dropZoneThumbnail.addEventListener(eventName, () => dropZoneThumbnail.classList.remove('active'), false);
     });
 
-    // Handle drop
+    // Handle file drop
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        updateFileInfo();
+    }, false);
+
     dropZoneThumbnail.addEventListener('drop', (e) => {
         const dt = e.dataTransfer;
         const files = dt.files;
@@ -805,11 +610,24 @@
         }
     }, false);
 
+    // File input change
+    fileInput.addEventListener('change', updateFileInfo);
+
+    function updateFileInfo() {
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const size = (file.size / (1024 * 1024 * 1024)).toFixed(2);
+            document.getElementById('fileHint').textContent = 
+                `${file.name} (${size}GB)`;
+        }
+    }
+
     thumbnailInput.addEventListener('change', previewThumbnail);
 
     function previewThumbnail() {
         const file = thumbnailInput.files[0];
         if (file) {
+            // Validate file size
             if (file.size > 2 * 1024 * 1024) {
                 alert('Thumbnail file must be less than 2MB');
                 thumbnailInput.value = '';
@@ -832,17 +650,8 @@
 
     // Form submission
     form.addEventListener('submit', (e) => {
-        const checkboxes = document.querySelectorAll('input[name="media_files"]');
-        const isAnyChecked = Array.from(checkboxes).some(cb => cb.checked);
-
-        if (!isAnyChecked) {
-            e.preventDefault();
-            alert('Please select at least one media file');
-            return;
-        }
-
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="loading-spinner"></span> Creating...';
+        submitBtn.innerHTML = '<span class="loading-spinner"></span> Uploading...';
     });
 </script>
 {% endblock %}
