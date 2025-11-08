@@ -1,0 +1,658 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Media - YouTube Streamer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        padding: 2rem 0;
+    }
+
+    .upload-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .upload-card:hover {
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+    }
+
+    .upload-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2.5rem;
+        text-align: center;
+    }
+
+    .upload-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        letter-spacing: -0.5px;
+    }
+
+    .upload-header p {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .upload-body {
+        padding: 2.5rem;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.3px;
+    }
+
+    .form-label .required {
+        color: #e53e3e;
+        margin-left: 0.25rem;
+    }
+
+    .form-label .help-text {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 400;
+        color: #718096;
+        margin-top: 0.25rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        background-color: #f7fafc;
+    }
+
+    .form-input::placeholder {
+        color: #a0aec0;
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background-color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: inherit;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        padding-right: 2.5rem;
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        background-color: #f7fafc;
+    }
+
+    .drop-zone {
+        border: 2px dashed #cbd5e0;
+        border-radius: 12px;
+        padding: 3rem 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background-color: #f7fafc;
+    }
+
+    .drop-zone:hover {
+        border-color: #667eea;
+        background-color: #edf2f7;
+    }
+
+    .drop-zone.active {
+        border-color: #667eea;
+        background-color: #e6efff;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .drop-zone-icon {
+        width: 3rem;
+        height: 3rem;
+        margin: 0 auto 1rem;
+        color: #cbd5e0;
+        transition: all 0.3s ease;
+    }
+
+    .drop-zone:hover .drop-zone-icon {
+        color: #667eea;
+        transform: scale(1.1);
+    }
+
+    .drop-zone-text {
+        font-size: 0.95rem;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+    }
+
+    .drop-zone-link {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .drop-zone-link:hover {
+        color: #764ba2;
+        text-decoration: underline;
+    }
+
+    .drop-zone-hint {
+        font-size: 0.85rem;
+        color: #718096;
+        margin-top: 0.5rem;
+    }
+
+    .thumbnail-preview {
+        margin-top: 1.5rem;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid #e2e8f0;
+    }
+
+    .thumbnail-preview-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 0.75rem;
+        display: block;
+    }
+
+    .thumbnail-preview-img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 8px;
+    }
+
+    .thumbnail-remove-btn {
+        display: inline-block;
+        margin-top: 0.75rem;
+        padding: 0.5rem 1rem;
+        background-color: #fed7d7;
+        color: #c53030;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .thumbnail-remove-btn:hover {
+        background-color: #fc8181;
+        color: white;
+    }
+
+    .file-input-hidden {
+        display: none;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .btn {
+        padding: 0.875rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-family: inherit;
+        letter-spacing: -0.3px;
+    }
+
+    .btn-cancel {
+        background-color: #edf2f7;
+        color: #2d3748;
+        flex: 1;
+    }
+
+    .btn-cancel:hover {
+        background-color: #e2e8f0;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        flex: 1;
+    }
+
+    .btn-primary:hover {
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .alert {
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+        border-left: 4px solid;
+        animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-1rem);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .alert-success {
+        background-color: #c6f6d5;
+        color: #22543d;
+        border-left-color: #48bb78;
+    }
+
+    .alert-error {
+        background-color: #fed7d7;
+        color: #742a2a;
+        border-left-color: #f56565;
+    }
+
+    .alert-warning {
+        background-color: #feebc8;
+        color: #7c2d12;
+        border-left-color: #ed8936;
+    }
+
+    .alert-info {
+        background-color: #bee3f8;
+        color: #2c5282;
+        border-left-color: #4299e1;
+    }
+
+    .info-box {
+        background-color: #f0f4ff;
+        border: 1px solid #cbd5e0;
+        border-left: 4px solid #667eea;
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-top: 2rem;
+    }
+
+    .info-box-title {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .info-box-content {
+        font-size: 0.9rem;
+        color: #4a5568;
+    }
+
+    .info-box-content ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .info-box-content li {
+        padding-left: 1.5rem;
+        position: relative;
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+    }
+
+    .info-box-content li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: #667eea;
+        font-weight: bold;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+        .upload-container {
+            padding: 1rem;
+        }
+
+        .upload-header {
+            padding: 1.5rem;
+        }
+
+        .upload-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .upload-body {
+            padding: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+
+        .drop-zone {
+            padding: 2rem 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <div class="max-w-2xl mx-auto w-full">
+        <div class="upload-card">
+            <!-- Header -->
+            <div class="upload-header">
+                <h1>📤 Upload Media</h1>
+                <p>Add videos or audio files to your streaming library</p>
+            </div>
+
+            <!-- Body -->
+            <div class="upload-body">
+                <!-- Alerts -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Title Field -->
+                    <div class="form-section">
+                        <label for="title" class="form-label">
+                            Media Title
+                            <span class="required">*</span>
+                            <span class="help-text">Max 255 characters</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            name="title" 
+                            id="title" 
+                            class="form-input"
+                            placeholder="Enter media title (e.g., Music Video, Podcast Episode)"
+                            maxlength="255"
+                            required
+                        >
+                    </div>
+
+                    <!-- Media Type Field -->
+                    <div class="form-section">
+                        <label for="media_type" class="form-label">
+                            Media Type
+                            <span class="required">*</span>
+                        </label>
+                        <select name="media_type" id="media_type" class="form-select" required>
+                            <option value="">Select media type</option>
+                            <option value="video">🎬 Video</option>
+                            
+                        </select>
+                    </div>
+
+                    <!-- File Upload Field -->
+                    <div class="form-section">
+                        <label for="file" class="form-label">
+                            Media File
+                            <span class="required">*</span>
+                            <span class="help-text">Maximum 1 GB per file</span>
+                        </label>
+                        <div class="drop-zone" id="dropZone">
+                            <svg class="drop-zone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <p class="drop-zone-text">
+                                <span class="drop-zone-link" onclick="document.getElementById('file').click();">Click to upload</span>
+                                or drag and drop
+                            </p>
+                            <p class="drop-zone-hint" id="fileHint">MP4, WebM, AVI, MOV • </p>
+                        </div>
+                        <input 
+                            type="file" 
+                            name="file" 
+                            id="file" 
+                            class="file-input-hidden"
+                            accept="video/*,audio/*"
+                            required
+                        >
+                    </div>
+                
+                    <!-- Thumbnail Upload Field -->
+                    <!--
+                    <div class="form-section">
+                        <label for="thumbnail" class="form-label">
+                            Thumbnail Image
+                            <span style="color: #a0aec0;">(Optional)</span>
+                            <span class="help-text">JPG or PNG • Max 2MB • Recommended 1280x720px</span>
+                        </label>
+                        <div class="drop-zone" id="dropZoneThumbnail">
+                            <svg class="drop-zone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6 6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p class="drop-zone-text">
+                                <span class="drop-zone-link" onclick="document.getElementById('thumbnail').click();">Click to upload</span>
+                                or drag and drop
+                            </p>
+                            <p class="drop-zone-hint">JPG, PNG, or GIF • Max 2MB</p>
+                        </div>
+                        <input 
+                            type="file" 
+                            name="thumbnail" 
+                            id="thumbnail" 
+                            class="file-input-hidden"
+                            accept="image/jpeg,image/png,image/gif"
+                        >
+
+                        
+                        <div id="thumbnailPreview" class="thumbnail-preview" style="display: none;">
+                            <span class="thumbnail-preview-label">Preview:</span>
+                            <img id="thumbnailImg" src="" alt="Thumbnail" class="thumbnail-preview-img">
+                            <button type="button" class="thumbnail-remove-btn" onclick="removeThumbnail()">
+                                ✕ Remove Thumbnail
+                            </button>
+                        </div>
+                    </div>
+                    -->
+                    <!-- Action Buttons -->
+                    <div class="form-actions">
+                        <a href="{% url 'media_list' %}" class="btn btn-cancel">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <span>Upload Media</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <div class="info-box-title">📋 Upload Guidelines</div>
+            <div class="info-box-content">
+                <ul>
+                    <li>Supported video formats: MP4, WebM, AVI, MOV, MKV</li>
+                    <li>Supported audio formats: MP3, WAV, AAC, OGG, FLAC</li>
+                    <li>Maximum file size: 1GB per file</li>
+                    <li>Thumbnail helps viewers identify your content</li>
+                    <li>Recommended thumbnail size: 1280x720 pixels (16:9 ratio)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // File upload handling
+    const fileInput = document.getElementById('file');
+    const dropZone = document.getElementById('dropZone');
+    const thumbnailInput = document.getElementById('thumbnail');
+    const dropZoneThumbnail = document.getElementById('dropZoneThumbnail');
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.querySelector('form');
+
+    // File drop zone events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        dropZoneThumbnail.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Highlight drop zone on drag
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('active'), false);
+        dropZoneThumbnail.addEventListener(eventName, () => dropZoneThumbnail.classList.add('active'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('active'), false);
+        dropZoneThumbnail.addEventListener(eventName, () => dropZoneThumbnail.classList.remove('active'), false);
+    });
+
+    // Handle file drop
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        updateFileInfo();
+    }, false);
+
+    dropZoneThumbnail.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+        if (imageFiles.length > 0) {
+            thumbnailInput.files = new DataTransfer().items.add(imageFiles[0]).files;
+            previewThumbnail();
+        }
+    }, false);
+
+    // File input change
+    fileInput.addEventListener('change', updateFileInfo);
+
+    function updateFileInfo() {
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const size = (file.size / (1024 * 1024 * 1024)).toFixed(2);
+            document.getElementById('fileHint').textContent = 
+                `${file.name} (${size}GB)`;
+        }
+    }
+
+    thumbnailInput.addEventListener('change', previewThumbnail);
+
+    function previewThumbnail() {
+        const file = thumbnailInput.files[0];
+        if (file) {
+            // Validate file size
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Thumbnail file must be less than 2MB');
+                thumbnailInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('thumbnailImg').src = e.target.result;
+                document.getElementById('thumbnailPreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function removeThumbnail() {
+        thumbnailInput.value = '';
+        document.getElementById('thumbnailPreview').style.display = 'none';
+    }
+
+    // Form submission
+    form.addEventListener('submit', (e) => {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading-spinner"></span> Uploading...';
+    });
+</script>
+{% endblock %}
