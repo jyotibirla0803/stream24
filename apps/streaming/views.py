@@ -14,11 +14,50 @@ from apps.accounts.models import YouTubeAccount
 from apps.payments.models import Subscription
 from .stream_manager import StreamManager
 import json
-from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
-from .models import MediaFile
+
+# NEW: Helper function to get user's total storage used
+def get_user_storage_usage(user):
+    """Calculate total storage used by user in bytes"""
+    total_size = 0
+    media_files = MediaFile.objects.filter(user=user)
+    for media in media_files:
+        if media.file:
+            try:
+                total_size += media.file.size
+            except:
+                pass
+    return total_size
+
+# NEW: Helper function to check if user has storage available
+def has_storage_available(user, file_size):
+    """Check if user has storage available for new file"""
+    subscription = Subscription.objects.filter(
+        user=user,
+        is_active=True,
+        status='active'
+    ).first()
+
+    if not subscription:
+        return False, 0, 0
+
+    current_usage = get_user_storage_usage(user)
+    available_storage = subscription.storage_limit - current_usage
+
+    if file_size > available_storage:
+        return False, current_usage, subscription.storage_limit
+
+    return True, current_usage, subscription.storage_limit
+
+# NEW: Convert bytes to readable format
+def format_bytes(bytes_size):
+    """Convert bytes to human readable format"""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if bytes_size < 1024:
+            return f"{bytes_size:.2f} {unit}"
+        bytes_size /= 1024
+    return f"{bytes_size:.2f} TB"
 
 @login_required
 @require_POST
@@ -159,7 +198,7 @@ def stream_create(request):
         youtube_account_id = request.POST.get('youtube_account')
         media_file_ids = request.POST.getlist('media_files')
         loop_enabled = request.POST.get('loop_enabled') == 'on'
-        thumbnail = request.FILES.get('thumbnail')  # NEW: Get thumbnail file
+        thumbnail = request.FILES.get('thumbnail')
 
         try:
             youtube_account = YouTubeAccount.objects.get(id=youtube_account_id, user=request.user)
@@ -171,7 +210,7 @@ def stream_create(request):
                 title=title,
                 description=description,
                 loop_enabled=loop_enabled,
-                thumbnail=thumbnail  # NEW: Save thumbnail
+                thumbnail=thumbnail
             )
 
             # Add media files
@@ -186,9 +225,17 @@ def stream_create(request):
             messages.error(request, f'Failed to create stream: {str(e)}')
 
     media_files = MediaFile.objects.filter(user=request.user)
+
+    # NEW: Get storage info for context
+    current_usage = get_user_storage_usage(request.user)
+    available_storage = subscription.storage_limit - current_usage
+
     context = {
         'youtube_accounts': youtube_accounts,
         'media_files': media_files,
+        'storage_usage': format_bytes(current_usage),
+        'storage_limit': format_bytes(subscription.storage_limit),
+        'storage_available': format_bytes(available_storage),
     }
     return render(request, 'streaming/stream_create.html', context)
 
@@ -223,7 +270,7 @@ def stream_start(request, stream_id):
         if not broadcast_id:
             raise Exception("Failed to create YouTube broadcast")
 
-        # NEW: Upload thumbnail to YouTube if exists
+        # Upload thumbnail to YouTube if exists
         if stream.thumbnail:
             try:
                 upload_thumbnail_to_youtube(stream, broadcast_id)
@@ -265,9 +312,7 @@ def stream_start(request, stream_id):
     return redirect('stream_detail', stream_id=stream.id)
 
 def upload_thumbnail_to_youtube(stream, video_id):
-    """
-    Upload thumbnail to YouTube using the Thumbnails.set API endpoint
-    """
+    """Upload thumbnail to YouTube using the Thumbnails.set API endpoint"""
     youtube_account = stream.youtube_account
 
     # Build credentials
@@ -336,14 +381,39 @@ def stream_delete(request, stream_id):
 
 @login_required
 def media_upload_view(request):
-    """Upload media files"""
+    """Upload media files with storage limit check"""
+    # Get subscription
+    subscription = Subscription.objects.filter(
+        user=request.user,
+        is_active=True,
+        status='active'
+    ).first()
+
+    if not subscription:
+        messages.error(request, 'You need an active subscription to upload media')
+        return redirect('subscribe')
+
     if request.method == 'POST':
         title = request.POST.get('title')
         media_type = request.POST.get('media_type')
         file = request.FILES.get('file')
-        thumbnail = request.FILES.get('thumbnail')  # Already exists
+        thumbnail = request.FILES.get('thumbnail')
 
         try:
+            # NEW: Check storage before upload
+            file_size = file.size
+            has_storage, current_usage, storage_limit = has_storage_available(request.user, file_size)
+
+            if not has_storage:
+                messages.error(
+                    request,
+                    f'Not enough storage! You have used {format_bytes(current_usage)} out of '
+                    f'{format_bytes(storage_limit)} ({subscription.plan_type.title()} plan). '
+                    f'Please delete some files or upgrade your plan.'
+                )
+                return redirect('media_upload')
+
+            # Create media file
             media_file = MediaFile.objects.create(
                 user=request.user,
                 title=title,
@@ -352,31 +422,96 @@ def media_upload_view(request):
                 media_type=media_type,
                 file_size=file.size
             )
-            messages.success(request, 'Media file uploaded successfully!')
+
+            # Get updated storage info
+            new_usage = get_user_storage_usage(request.user)
+            new_available = subscription.storage_limit - new_usage
+
+            messages.success(
+                request, 
+                f'Media file uploaded successfully! '
+                f'Storage: {format_bytes(new_usage)} / {format_bytes(subscription.storage_limit)} used. '
+                f'({format_bytes(new_available)} available)'
+            )
             return redirect('media_list')
 
         except Exception as e:
             messages.error(request, f'Failed to upload media: {str(e)}')
 
-    return render(request, 'streaming/media_upload.html')
+    # NEW: Get storage info for context
+    current_usage = get_user_storage_usage(request.user)
+    available_storage = subscription.storage_limit - current_usage
+
+    context = {
+        'storage_usage': format_bytes(current_usage),
+        'storage_limit': format_bytes(subscription.storage_limit),
+        'storage_available': format_bytes(available_storage),
+        'storage_percentage': (current_usage / subscription.storage_limit) * 100,
+    }
+
+    return render(request, 'streaming/media_upload.html', context)
 
 @login_required
 def media_list_view(request):
+    """List media files with storage info"""
     media_files = MediaFile.objects.filter(user=request.user)
-    return render(request, 'streaming/media_list.html', {'media_files': media_files})
+
+    # Get subscription
+    subscription = Subscription.objects.filter(
+        user=request.user,
+        is_active=True,
+        status='active'
+    ).first()
+
+    # Get storage info
+    current_usage = get_user_storage_usage(request.user)
+    available_storage = 0
+    if subscription:
+        available_storage = subscription.storage_limit - current_usage
+
+    context = {
+        'media_files': media_files,
+        'storage_usage': format_bytes(current_usage),
+        'storage_limit': format_bytes(subscription.storage_limit) if subscription else 'N/A',
+        'storage_available': format_bytes(available_storage),
+    }
+
+    return render(request, 'streaming/media_list.html', context)
 
 @login_required
 def media_delete_view(request, media_id):
+    """Delete media file and free up storage"""
     media = get_object_or_404(MediaFile, id=media_id, user=request.user)
+
     if request.method == "POST":
-        media.file.delete(save=False)  # Delete file from storage
-        if media.thumbnail:  # Delete thumbnail if exists
+        freed_size = media.file.size if media.file else 0
+
+        media.file.delete(save=False)
+        if media.thumbnail:
             media.thumbnail.delete(save=False)
-        media.delete()  # Delete record from DB
-        messages.success(request, "Media file deleted successfully.")
+        media.delete()
+
+        # Get updated storage info
+        subscription = Subscription.objects.filter(
+            user=request.user,
+            is_active=True,
+            status='active'
+        ).first()
+
+        if subscription:
+            current_usage = get_user_storage_usage(request.user)
+            messages.success(
+                request, 
+                f'Media file deleted successfully. '
+                f'Freed {format_bytes(freed_size)} storage. '
+                f'Current usage: {format_bytes(current_usage)} / {format_bytes(subscription.storage_limit)}'
+            )
+        else:
+            messages.success(request, "Media file deleted successfully.")
+
         return redirect('media_list')
-    else:
-        return redirect('media_list')
+
+    return redirect('media_list')
 
 @login_required
 def stream_status_api(request, stream_id):
