@@ -7,6 +7,7 @@ class Subscription(models.Model):
     PLAN_CHOICES = [
         ('monthly', 'Monthly Plan'),
         ('annual', 'Annual Plan'),
+        ('oneday' , 'OneDay Plan'),
     ]
 
     STATUS_CHOICES = [
@@ -49,8 +50,11 @@ class Subscription(models.Model):
             self.max_streams = plan_config['max_streams']
 
             # NEW: Set storage limit based on plan type
+            
             if self.plan_type == 'monthly':
                 self.storage_limit = 1 * (1024 ** 3)  # 1GB in bytes
+            elif self.plan_type == 'oneday':
+                self.storage_limit = 0.5 * (1024 ** 3)  # 0.5 GB in bytes
             elif self.plan_type == 'annual':
                 self.storage_limit = 2 * (1024 ** 3)  # 2GB in bytes
 
