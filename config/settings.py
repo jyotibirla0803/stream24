@@ -127,12 +127,13 @@ RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET')
 
 # Subscription Plans
 SUBSCRIPTION_PLANS = {
-    '1 day': {
-        'name': 'Monthly Plan',
-        'price': 4900.00,  # in paise (499 INR)
-        'duration_days': 01,
+    'oneday': {
+        'name': 'OneDay Plan',
+        'price': 4900.00,  # in paise (49 INR)
+        'duration_days': 1,
         'max_streams': 1,
         'description': '1 concurrent stream, 01 day access'
+    },
     'monthly': {
         'name': 'Monthly Plan',
         'price': 49900.00,  # in paise (499 INR)
