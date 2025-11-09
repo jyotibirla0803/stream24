@@ -234,6 +234,29 @@
 
         <!-- Plans Grid -->
         <div class="plans-grid">
+            <!-- One Day Plan -->
+            <div class="plan-card {% if active_subscription.plan_type == 'oneday' %}active{% endif %}">
+                <div class="plan-header">
+                    <div class="plan-name">📅 One Day Plan</div>
+                    <div class="plan-price">₹49<small>/month</small></div>
+                </div>
+
+                <ul class="plan-features">
+                    <li>1 Streams at time </li>
+                    <li><span class="storage">💾 0.5 GB Storage</span></li>
+                    <li>YouTube Integration</li>
+                    <li>Priority Support</li>
+                    <li>Daily Renewal</li>
+                </ul>
+
+                <div class="plan-action">
+                    {% if active_subscription.plan_type == 'oneday' and active_subscription.is_active %}
+                        <button class="btn btn-secondary" disabled>Current Plan</button>
+                    {% else %}
+                        <a href="{% url 'create_order' 'monthly' %}" class="btn btn-primary">Subscribe Now</a>
+                    {% endif %}
+                </div>
+            </div>
             <!-- Monthly Plan -->
             <div class="plan-card {% if active_subscription.plan_type == 'monthly' %}active{% endif %}">
                 <div class="plan-header">
